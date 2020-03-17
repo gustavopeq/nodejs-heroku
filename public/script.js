@@ -1,9 +1,19 @@
-fetch("./pwnedtrim.json")
-.then(function(resp)
-{
-    return resp.json();
-})
-.then(function(data)
+const $file = $('#file');
+
+function onChange(event) {
+    let reader = new FileReader();
+    reader.onload = onReaderLoad;
+    reader.readAsText(event.target.files[0]);
+}
+
+function onReaderLoad(event){
+    let data = JSON.parse(event.target.result);
+
+    checkForCorruptedPasswords(data);
+
+}
+
+function checkForCorruptedPasswords(data)
 {
     let corrupteds = [];
 
@@ -28,8 +38,18 @@ fetch("./pwnedtrim.json")
         }
     }
 
-    corrupteds.forEach(element => 
+    $('#listFound').empty();
+
+    if(corrupteds.length > 0)
+    {
+        corrupteds.forEach(element => 
         {
-            console.log(element.Alias);
+            $('#listFound').append(`<p list-style-type: none>${element.Alias}</p>`);
         });
-});
+    }else
+    {
+        $('#listFound').append(`<p list-style-type: none>There is no alias with compromised password. </p>`);
+    }
+}
+
+$file.on('change', onChange);
