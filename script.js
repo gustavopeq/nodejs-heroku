@@ -1,6 +1,7 @@
 var fs = require("fs");
 
 var jsonFile = process.argv[2];
+var secondCommand = process.argv[3];
 
 fs.readFile(jsonFile, function(err, file){
 
@@ -24,19 +25,14 @@ function checkForCorruptedPasswords(data)
         const elementData = data[i];
         for (let j = 0; j < elementData.Breaches.length; j++) {
             const elementBreaches = elementData.Breaches[j];
-            let canBreak = false;
+            
             for (let k = 0; k < elementBreaches.DataClasses.length; k++) {
                 const elementDataClasses = elementBreaches.DataClasses[k];
                 
                 if(elementDataClasses == 'Passwords')
                 {
                     corrupteds.push(elementData);
-                    //canBreak = true;
                 }
-            }
-            if(canBreak)
-            {
-                break;
             }
         }
     }
