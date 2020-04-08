@@ -1,43 +1,72 @@
 var fs = require("fs");
 
-var jsonFile = process.argv[2];
-var secondCommand = process.argv[3];
+const jsonFile = process.argv[2];
+const conditionType = process.argv[3];
+const conditionValue = process.argv[4];
+
+const listOfConditionTypes = ["-before", "-after"]
+var checkCondition = false;
+
+if(conditionType != undefined && !listOfConditionTypes.includes(conditionType))
+{
+    console.log("Condition type not valid!");
+    return;
+}
+
+if(conditionType != undefined)
+{
+    checkCondition = true;
+}
 
 fs.readFile(jsonFile, function(err, file){
 
     let data = JSON.parse(file);
 
-    checkForCorruptedPasswords(data);
+    checkForCompromisedPasswords(data);
 });
 
-function checkForCorruptedPasswords(data)
+function checkForCompromisedPasswords(data)
 {
     if(!data[0].hasOwnProperty('DomainName') || !data[0].hasOwnProperty('Alias') || !data[0].hasOwnProperty('Breaches'))
     {
-        alert('Json not valid for this application');
-        file.value = '';
+        console.log('Json not valid...');
         return;
     }
 
-    let corrupteds = [];
+    let listOfCompromised = [];
 
-    for (let i = 0; i < data.length; i++) {
-        const elementData = data[i];
-        for (let j = 0; j < elementData.Breaches.length; j++) {
-            const elementBreaches = elementData.Breaches[j];
-            
-            for (let k = 0; k < elementBreaches.DataClasses.length; k++) {
-                const elementDataClasses = elementBreaches.DataClasses[k];
-                
+    data.forEach(elementData => {
+        elementData.Breaches.forEach(elementBreaches => {
+            elementBreaches.DataClasses.forEach(elementDataClasses => {
                 if(elementDataClasses == 'Passwords')
                 {
-                    corrupteds.push(elementData);
+                    if(checkCondition)
+                    {
+                        if(elementBreaches.BreachDate < conditionValue)
+                        {
+                            if(conditionType == listOfConditionTypes[0])
+                            {
+                                listOfCompromised.push(elementData);
+                            }
+                        }else
+                        {
+                            if(conditionType == listOfConditionTypes[1])
+                            {
+                                listOfCompromised.push(elementData);
+                            }
+                        }
+                    }else
+                    {
+                        listOfCompromised.push(elementData);
+                    }
                 }
-            }
-        }
-    }
+            });
+        });
+    });
 
-    corrupteds.forEach(element => {
+
+    listOfCompromised.forEach(element => {
         console.log(element.Alias);
     });
+       
 }
