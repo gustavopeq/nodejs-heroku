@@ -3,19 +3,46 @@ var fs = require("fs");
 const jsonFile = process.argv[2];
 const conditionType = process.argv[3];
 const conditionValue = process.argv[4];
+const secondConditionType = process.argv[5];
+const secondConditionValue = process.argv[6];
 
-const listOfConditionTypes = ["-before", "-after"]
-var checkCondition = false;
+const BEFORE_CONDITION = 0;
+const AFTER_CONDITION = 1;
+
+const listOfConditionTypes = ["-before", "-after"];
+var conditionBefore = false;
+var conditionAfter = false;
+var conditionBetweenBeforeAndAfter = false;
+var conditionBetweenAfterAndBefore = false;
 
 if(conditionType != undefined && !listOfConditionTypes.includes(conditionType))
 {
     console.log("Condition type not valid!");
     return;
+}else if(secondConditionType != undefined && !listOfConditionTypes.includes(secondConditionType)){
+    console.log("Second condition type not valid!");
+    return;
+}else if(conditionType != undefined && secondConditionType != undefined && secondConditionType == conditionType){
+    console.log("The same condition can't be used twice!")
+    return;
 }
 
 if(conditionType != undefined)
 {
-    checkCondition = true;
+    if(secondConditionType != undefined){
+        if(conditionType == listOfConditionTypes[BEFORE_CONDITION]){
+            conditionBetweenBeforeAndAfter = true;
+        }else{
+            conditionBetweenAfterAndBefore = true;
+        }
+    }else
+    {
+        if(conditionType == listOfConditionTypes[BEFORE_CONDITION]){
+            conditionBefore = true;
+        }else if(conditionType == listOfConditionTypes[AFTER_CONDITION]){
+            conditionAfter = true;
+        }
+    }
 }
 
 fs.readFile(jsonFile, function(err, file){
@@ -40,23 +67,23 @@ function checkForCompromisedPasswords(data)
             elementBreaches.DataClasses.forEach(elementDataClasses => {
                 if(elementDataClasses == 'Passwords')
                 {
-                    if(checkCondition)
-                    {
-                        if(elementBreaches.BreachDate < conditionValue)
-                        {
-                            if(conditionType == listOfConditionTypes[0])
-                            {
-                                listOfCompromised.push(elementData);
-                            }
-                        }else
-                        {
-                            if(conditionType == listOfConditionTypes[1])
-                            {
-                                listOfCompromised.push(elementData);
-                            }
+                    if(conditionBetweenBeforeAndAfter){
+                        if((elementBreaches.BreachDate < conditionValue) && (elementBreaches.BreachDate > secondConditionValue)){
+                            listOfCompromised.push(elementData);
                         }
-                    }else
-                    {
+                    }else if(conditionBetweenAfterAndBefore){
+                        if((elementBreaches.BreachDate > conditionValue) && (elementBreaches.BreachDate < secondConditionValue)){
+                            listOfCompromised.push(elementData);
+                        }
+                    }else if(conditionBefore){
+                        if(elementBreaches.BreachDate < conditionValue){
+                            listOfCompromised.push(elementData);
+                        }
+                    }else if(conditionAfter){
+                        if(elementBreaches.BreachDate > conditionValue){
+                            listOfCompromised.push(elementData);
+                        }
+                    }else{
                         listOfCompromised.push(elementData);
                     }
                 }
